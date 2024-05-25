@@ -1,34 +1,76 @@
-import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+import React, { useState } from 'react';
+import { gql, useQuery, useMutation } from '@apollo/client';
 
-function CourseList() {
-    const [courses, setCourses] = useState([]);
+const GET_COURSES = gql`
+  query GetCourses {
+    courses {
+      id
+      title
+      description
+    }
+  }
+`;
 
-    useEffect(() => {
-        axios.get('http://localhost:5001/courses')
-          .then(response => {
-            setCourses(response.data);
-          })
-          .catch(error => {
-            console.error("There was an error fetching the courses", error);
-          });
-    }, []);
+const ADD_COURSE = gql`
+  mutation AddCourse($title: String!, $description: String!) {
+    addCourse(title: $title, description: $description) {
+      id
+      title
+      description
+    }
+  }
+`;
 
-    return (
-        <div>
-            <h1>Course List</h1>
-            <ul>
-                {courses.length > 0 ? (
-                    courses.map(course => (
-                        <li key={course._id}>
-                            <h2>{course.title}</h2>
-                            <p>{course.description}</p>
-                        </li>
-                    ))
-                ) : (
-                    <li>No courses available</li>
-                )}
-            </ul>
-        </div>
-    );
-}
+const CourseList = () => {
+  const { loading, error, data } = useQuery(GET_COURSES);
+  const [addCourse] = useMutation(ADD_COURSE);
+
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
+
+  const handleAddCourse = () => {
+    addCourse({
+      variables: { title, description },
+      refetchQueries: [{ query: GET_COURSES }]
+    });
+  };
+
+  if (loading) return <p>Loading...</p>;
+  if (error) return <p>Error :(</p>;
+
+  return (
+    <div>
+      <h1>Course List</h1>
+      <ul>
+        {data.courses.length > 0 ? (
+          data.courses.map(course => (
+            <li key={course.id}>
+              <h2>{course.title}</h2>
+              <p>{course.description}</p>
+            </li>
+          ))
+        ) : (
+          <li>No courses available</li>
+        )}
+      </ul>
+      <div>
+        <h2>Add Course</h2>
+        <input
+          type="text"
+          placeholder="Title"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+        />
+        <input
+          type="text"
+          placeholder="Description"
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+        />
+        <button onClick={handleAddCourse}>Add Course</button>
+      </div>
+    </div>
+  );
+};
+
+export default CourseList;
