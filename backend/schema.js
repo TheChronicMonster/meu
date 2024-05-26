@@ -1,15 +1,23 @@
 const { buildSchema } = require('graphql');
 
-module.exports = buildSchema(`
+const schema = buildSchema(`
+  type User {
+    id: ID!
+    username: String!
+    courses: [Course!]
+  }
+
   type Course {
     id: ID!
     title: String!
     description: String!
+    instructor: User
   }
 
   type Query {
     courses: [Course]
     course(id: ID!): Course
+    userCourses: [Course]
   }
 
   type Mutation {
@@ -18,3 +26,5 @@ module.exports = buildSchema(`
     deleteCourse(id: ID!): Course
   }
 `);
+
+module.exports = schema;
