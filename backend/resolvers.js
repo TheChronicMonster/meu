@@ -13,10 +13,18 @@ module.exports = {
     return await Course.find({ instructor: context.user.id }).populate('instructor');
   },
   addCourse: async ({ title, description }, context) => {
-    if (!context.user) throw new Error('Authentication required');
-    const course = new Course({ title, description, instructor: context.user.id });
-    await course.save();
-    return course.populate('instructor');
+    if (!context.user) {
+      throw new Error('Authentication required');
+    }
+    
+    try {
+      const course = new Course({ title, description, instructor: context.user.id });
+      await course.save();
+      return course.populate('instructor');
+    } catch (error) {
+      console.error('Error creating course:', error);
+      throw new Error('Error creating course');
+    }
   },
   updateCourse: async ({ id, title, description }, context) => {
     if (!context.user) throw new Error('Authentication required');

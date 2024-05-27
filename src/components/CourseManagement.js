@@ -52,10 +52,16 @@ const DELETE_COURSE = gql`
 `;
 
 const CourseManagement = () => {
-  const { loading, error, data } = useQuery(GET_COURSES);
-  const [addCourse] = useMutation(ADD_COURSE);
-  const [updateCourse] = useMutation(UPDATE_COURSE);
-  const [deleteCourse] = useMutation(DELETE_COURSE);
+  const { loading, error, data, refetch } = useQuery(GET_COURSES);
+  const [addCourse] = useMutation(ADD_COURSE, {
+    refetchQueries: [{ query: GET_COURSES }]
+  });
+  const [updateCourse] = useMutation(UPDATE_COURSE, {
+    refetchQueries: [{ query: GET_COURSES }]
+  });
+  const [deleteCourse] = useMutation(DELETE_COURSE, {
+    refetchQueries: [{ query: GET_COURSES }]
+  });
 
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');

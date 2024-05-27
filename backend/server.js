@@ -24,7 +24,7 @@ const authMiddleware = (req, res, next) => {
     return next();
   }
 
-  jwt.verify(token, secret, (err, decoded) => {
+  jwt.verify(token.split(' ')[1], secret, (err, decoded) => { // Assuming Bearer token
     if (err) {
       req.user = null;
     } else {

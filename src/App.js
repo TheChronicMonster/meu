@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ApolloClient, InMemoryCache, ApolloProvider, createHttpLink } from '@apollo/client';
-import { setContext } from '@apollo/link-context';
+import { setContext } from '@apollo/client/link/context';
 import CourseManagement from './components/CourseManagement';
 import Auth from './components/Auth';
 
