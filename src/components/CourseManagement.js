@@ -1,89 +1,46 @@
 import React, { useState, useEffect } from 'react';
-import { gql, useQuery, useMutation } from '@apollo/client';
 
-const GET_COURSES = gql`
-  query GetCourses {
-    courses {
-      id
-      title
-      description
-      instructor {
-        id
-        username
-      }
-    }
-  }
-`;
-
-const ADD_COURSE = gql`
-  mutation AddCourse($title: String!, $description: String!) {
-    addCourse(title: $title, description: $description) {
-      id
-      title
-      description
-      instructor {
-        id
-        username
-      }
-    }
-  }
-`;
-
-const UPDATE_COURSE = gql`
-  mutation UpdateCourse($id: ID!, $title: String!, $description: String!) {
-    updateCourse(id: $id, title: $title, description: $description) {
-      id
-      title
-      description
-      instructor {
-        id
-        username
-      }
-    }
-  }
-`;
-
-const DELETE_COURSE = gql`
-  mutation DeleteCourse($id: ID!) {
-    deleteCourse(id: $id) {
-      id
-    }
-  }
-`;
-
-const CourseManagement = () => {
-  const { loading, error, data, refetch } = useQuery(GET_COURSES);
-  const [addCourse] = useMutation(ADD_COURSE, {
-    refetchQueries: [{ query: GET_COURSES }]
-  });
-  const [updateCourse] = useMutation(UPDATE_COURSE, {
-    refetchQueries: [{ query: GET_COURSES }]
-  });
-  const [deleteCourse] = useMutation(DELETE_COURSE, {
-    refetchQueries: [{ query: GET_COURSES }]
-  });
-
+const CourseManagement = ({ account, platformContract, courses, fetchCourses }) => {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [editingCourse, setEditingCourse] = useState(null);
 
   useEffect(() => {
-    if (error) {
-      console.error('Error fetching courses:', error);
-      console.error('Error details:', error.networkError?.result || error.graphQLErrors || error.message);
-    }
-  }, [error]);
+    fetchCourses();
+  }, [fetchCourses]);
 
-  const handleSubmit = (e) => {
+  const handleCreateCourse = async (e) => {
     e.preventDefault();
-    if (editingCourse) {
-      updateCourse({ variables: { id: editingCourse.id, title, description } });
-    } else {
-      addCourse({ variables: { title, description } });
+    try {
+      await platformContract.methods.createCourse(title, description)
+        .send({ from: account });
+      setTitle('');
+      setDescription('');
+      setEditingCourse(null);
+      fetchCourses(); // Refetch courses to update the list
+    } catch (error) {
+      console.error('Error creating course:', error);
     }
-    setTitle('');
-    setDescription('');
-    setEditingCourse(null);
+  };
+
+  const handleEditCourse = async (courseId, newTitle, newDescription) => {
+    try {
+      await platformContract.methods.updateCourse(courseId, newTitle, newDescription)
+        .send({ from: account });
+      fetchCourses();
+    } catch (error) {
+      console.error('Error updating course:', error);
+    }
+  };
+
+  const handleDeleteCourse = async (courseId) => {
+    try {
+      await platformContract.methods.deleteCourse(courseId)
+        .send({ from: account });
+      fetchCourses();
+    } catch (error) {
+      console.error('Error deleting course:', error);
+    }
   };
 
   const handleEdit = (course) => {
@@ -92,12 +49,14 @@ const CourseManagement = () => {
     setEditingCourse(course);
   };
 
-  const handleDelete = (id) => {
-    deleteCourse({ variables: { id } });
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (editingCourse) {
+      handleEditCourse(editingCourse.id, title, description);
+    } else {
+      handleCreateCourse(e);
+    }
   };
-
-  if (loading) return <p>Loading...</p>;
-  if (error) return <p>Error :(</p>;
 
   return (
     <div>
@@ -119,15 +78,18 @@ const CourseManagement = () => {
 
       <h2>All Courses</h2>
       <ul>
-        {data.courses.map((course) => (
+        {courses.map((course) => (
           <li key={course.id}>
             <h3>{course.title}</h3>
             <p>{course.description}</p>
-            <p>Instructor: {course.instructor.username}</p>
-            {course.instructor.id === localStorage.getItem('userId') && (
+            <p>Creator: {course.creator}</p>
+            {course.instructors.map((instructor, index) => (
+              <p key={index}>Instructor: {instructor}</p>
+            ))}
+            {course.creator === account && (
               <>
                 <button onClick={() => handleEdit(course)}>Edit</button>
-                <button onClick={() => handleDelete(course.id)}>Delete</button>
+                <button onClick={() => handleDeleteCourse(course.id)}>Delete</button>
               </>
             )}
           </li>

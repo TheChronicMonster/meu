@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
-const CourseList = ({ account, platformContract, tokenContract }) => {
+const CourseEnroller = ({ account, platformContract, tokenContract }) => {
   const [courses, setCourses] = useState([]);
   const [enrolledCourseId, setEnrolledCourseId] = useState(null);
 
@@ -39,7 +39,7 @@ const CourseList = ({ account, platformContract, tokenContract }) => {
 
   return (
     <div>
-      <h2>Course List</h2>
+      <h2>Enroll in a Course</h2>
       <ul>
         {courses.map((course) => (
           <li key={course.id}>
@@ -59,4 +59,4 @@ const CourseList = ({ account, platformContract, tokenContract }) => {
   );
 };
 
-export default CourseList;
+export default CourseEnroller;

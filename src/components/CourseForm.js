@@ -1,44 +1,45 @@
 import React, { useState } from 'react';
-import { gql, useMutation } from '@apollo/client';
 
-const ADD_COURSE = gql`
-  mutation AddCourse($title: String!, $description: String!) {
-    addCourse(title: $title, description: $description) {
-      id
-      title
-      description
-    }
-  }
-`;
+const CourseForm = ({ account, platformContract, fetchCourses, editingCourse }) => {
+  const [title, setTitle] = useState(editingCourse ? editingCourse.title : '');
+  const [description, setDescription] = useState(editingCourse ? editingCourse.description : '');
 
-const CourseForm = () => {
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [addCourse] = useMutation(ADD_COURSE);
-
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    addCourse({ variables: { title, description } });
-    setTitle('');
-    setDescription('');
+    try {
+      if (editingCourse) {
+        await platformContract.methods.updateCourse(editingCourse.id, title, description)
+          .send({ from: account });
+      } else {
+        await platformContract.methods.createCourse(title, description)
+          .send({ from: account });
+      }
+      setTitle('');
+      setDescription('');
+      fetchCourses(); // Refetch courses to update the list
+    } catch (error) {
+      console.error('Error submitting course:', error);
+    }
   };
 
   return (
-    <form onSubmit={handleSubmit}>
-      <h2>Create a New Course</h2>
-      <input
-        type="text"
-        placeholder="Title"
-        value={title}
-        onChange={(e) => setTitle(e.target.value)}
-      />
-      <textarea
-        placeholder="Description"
-        value={description}
-        onChange={(e) => setDescription(e.target.value)}
-      />
-      <button type="submit">Create Course</button>
-    </form>
+    <div>
+      <h2>{editingCourse ? 'Edit Course' : 'Create a New Course'}</h2>
+      <form onSubmit={handleSubmit}>
+        <input
+          type="text"
+          placeholder="Title"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+        />
+        <textarea
+          placeholder="Description"
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+        />
+        <button type="submit">{editingCourse ? 'Update Course' : 'Create Course'}</button>
+      </form>
+    </div>
   );
 };
 

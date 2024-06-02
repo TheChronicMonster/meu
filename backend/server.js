@@ -1,10 +1,8 @@
+require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const jwt = require('jsonwebtoken');
-const { graphqlHTTP } = require('express-graphql');
-const schema = require('./schema');
-const resolvers = require('./resolvers');
 const authRoutes = require('./routes/auth');
 
 const app = express();
@@ -14,7 +12,7 @@ mongoose.connect('mongodb://localhost:27017/decedu', { useNewUrlParser: true, us
 app.use(express.json());
 app.use(cors());
 
-const secret = 'your_jwt_secret';
+const secret = process.env.JWT_SECRET;
 
 // Middleware to protect routes
 const authMiddleware = (req, res, next) => {
@@ -36,12 +34,6 @@ const authMiddleware = (req, res, next) => {
 
 app.use(authMiddleware);
 app.use('/auth', authRoutes);
-
-app.use('/graphql', graphqlHTTP((req) => ({
-  schema: schema,
-  rootValue: { ...resolvers, user: req.user },
-  graphiql: true,
-})));
 
 const PORT = process.env.PORT || 5001;
 app.listen(PORT, () => {
